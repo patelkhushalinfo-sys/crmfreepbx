@@ -19,18 +19,23 @@ import json
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MySQL connection
+# Database connection (Using SQLite for development, can be switched to MySQL)
 mysql_user = os.getenv('MYSQL_USER', 'root')
 mysql_password = os.getenv('MYSQL_PASSWORD', 'mysql_pass')
 mysql_host = os.getenv('MYSQL_HOST', 'localhost')
 mysql_port = os.getenv('MYSQL_PORT', '3306')
 mysql_db = os.getenv('MYSQL_DATABASE', 'callbot_db')
 
-DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
+# Use SQLite for development (can be switched to MySQL by setting USE_MYSQL=true)
+use_mysql = os.getenv('USE_MYSQL', 'false').lower() == 'true'
+if use_mysql:
+    DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
+else:
+    DATABASE_URL = "sqlite:///./callbot.db"
 
 # SQLAlchemy setup
 Base = declarative_base()
-engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Enums
